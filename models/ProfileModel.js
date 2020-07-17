@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { ObjectID } = require("mongodb");
 const Schema = mongoose.Schema;
 
 const ProfileSchema = new Schema(
@@ -25,22 +26,12 @@ const ProfileSchema = new Schema(
     totalStars: {
       type: Number,
     },
-    connections: [
-      {
-        userID: {
-          type: Schema.Types.ObjectId,
-          ref: "users",
-        },
-      },
-    ],
-    posts: [
-      {
-        postID: {
-          type: Schema.Types.ObjectId,
-          ref: "posts",
-        },
-      },
-    ],
+    tuneUps: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "users" }],
+    },
+    posts: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "posts" }],
+    },
   },
   { timestamps: true }
 );

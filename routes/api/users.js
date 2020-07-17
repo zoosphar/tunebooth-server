@@ -1,15 +1,11 @@
 const express = require("express");
 const router = express.Router();
-const gravatar = require("gravatar");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const keys = require("../../config/keys");
 const passport = require("passport");
 
-const validateGoogleAuth = require("../../validation/googleAuthValidation");
-const validateFacebookAuth = require("../../validation/facebookAuthValidation");
-const validatePhoneLogin = require("../../validation/phoneAuthLogin");
-const validatePhoneRegister = require("../../validation/phoneAuthRegister");
+const userValidations = require("../../validation/userValidations.js");
 
 const User = require("../../models/UserModel");
 
@@ -17,7 +13,7 @@ const User = require("../../models/UserModel");
 // @desc    Google login/register
 // @access  Public
 router.post("/googleAuth", (req, res) => {
-  const { errors, isValid } = validateGoogleAuth(req.body);
+  const { errors, isValid } = userValidations.validateGoogleLogin(req.body);
   if (!isValid) {
     return res.status(400).json(errors);
   }
@@ -110,7 +106,7 @@ router.post("/googleAuth", (req, res) => {
 // @desc    Facebook login/register
 // @access  Public
 router.post("/fbAuth", (req, res) => {
-  const { errors, isValid } = validateFacebookAuth(req.body);
+  const { errors, isValid } = userValidations.validateFacebookLogin(req.body);
   if (!isValid) {
     return res.status(400).json({ errors });
   }
@@ -203,7 +199,7 @@ router.post("/fbAuth", (req, res) => {
 // @desc    Phone login/register
 // @access  Public
 router.post("/phoneAuthLogin", (req, res) => {
-  const { errors, isValid } = validatePhoneLogin(req.body);
+  const { errors, isValid } = userValidations.validatePhoneLogin(req.body);
   if (!isValid) {
     return res.status(400).json({ errors });
   }
@@ -260,7 +256,7 @@ router.post("/phoneAuthLogin", (req, res) => {
 // @desc    Phone register
 // @access  Public
 router.post("/phoneAuthRegister", (req, res) => {
-  const { errors, isValid } = validatePhoneRegister(req.body);
+  const { errors, isValid } = userValidations.validatePhoneRegister(req.body);
   if (!isValid) {
     return res.status(400).json({ errors });
   }
@@ -316,15 +312,11 @@ router.post("/phoneAuthRegister", (req, res) => {
 // @desc    Return current user
 // @access  Private
 router.get(
-  "/current",
+  "/refreshToken",
   passport.authenticate("jwt", { session: false }),
   (req, res, next) => {
     // const refreshTokenVal = refreshToken(req, res, next);
     return res.json({
-      id: req.user.id,
-      username: req.user.username,
-      email: req.user.email ? req.user.email : null,
-      phone: req.user.phone ? req.user.phone : null,
       token: req.token ? req.token : null,
     });
   }

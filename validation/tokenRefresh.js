@@ -9,32 +9,32 @@ const refreshToken = (req, res, next) => {
     jwt.verify(token, keys.secretOrKey, (err, decoded) => {
       if (decoded) {
         console.log(decoded);
-        let tokenDate = new Date(decoded.tokenDate);
-        let dateDiff = Date.now() - tokenDate;
-        dateDiff = Math.round(dateDiff / 1000 / 60 / 60 / 24);
+        // let tokenDate = new Date(decoded.tokenDate);
+        // let dateDiff = Date.now() - tokenDate;
+        // dateDiff = Math.round(dateDiff / 1000 / 60 / 60 / 24);
 
-        // refresh token after every 7 days
-        if (dateDiff >= 7) {
-          const payload = {
-            id: decoded.id,
-            username: decoded.username,
-            email: decoded.email,
-            tokenDate: Date.now()
-          };
-          jwt.sign(
-            payload,
-            keys.secretOrKey,
-            { expiresIn: "14d" },
-            (err, token) => {
-              req.token = token;
-              // res.json({ status: "refresh_success", token: "Bearer " + token });
-              console.log("Token Generated");
-            }
-          );
-        } else {
-          // res.json({ status: "refresh_failed" });
-          console.log("Token Not Generated");
-        }
+        // // refresh token after every 7 days
+        // if (dateDiff >= 7) {
+        const payload = {
+          id: decoded.id,
+          username: decoded.username,
+          email: decoded.email,
+          tokenDate: Date.now(),
+        };
+        jwt.sign(
+          payload,
+          keys.secretOrKey,
+          { expiresIn: "14d" },
+          (err, token) => {
+            req.token = "Bearer " + token;
+            // res.json({ status: "refresh_success", token: "Bearer " + token });
+            console.log("Token Generated");
+          }
+        );
+        // } else {
+        //   // res.json({ status: "refresh_failed" });
+        //   console.log("Token Not Generated");
+        // }
       }
     });
     next();

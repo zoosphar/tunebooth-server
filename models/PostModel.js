@@ -22,54 +22,42 @@ const PostSchema = new Schema(
       type: Boolean,
       default: false,
     },
-    link: {
-      type: String,
-    },
-    linkSrc: {
+    linkUrl: {
       type: String,
     },
     // This field will contain the link of the CDN provided by storage service
-    mediaName: {
+    mediaUrl: {
       type: String,
     },
-    mediaUrl: {
+    mediaThumbUrl: {
       type: String,
     },
     mediaType: {
       type: String,
     },
-    categories: {
+    category: {
       type: String,
-      required: true,
     },
-    pollOptions: [
-      {
-        optID: {
-          type: Number,
-        },
-        optVal: {
-          type: "Text",
-        },
-      },
-    ],
+    postType: {
+      type: String,
+    },
+    pollOptions: {
+      type: [String],
+    },
+    totalPolls: {
+      type: Number,
+    },
+    totalRatings: {
+      type: Number,
+    },
     polling: [
       {
         userID: {
           type: Schema.Types.ObjectId,
           ref: "users",
         },
-        choosedOpts: [
-          {
-            optID: {
-              type: Number,
-            },
-            optVal: {
-              type: "Text",
-            },
-          },
-        ],
-        time: {
-          type: String,
+        choosedOpts: {
+          type: [String],
         },
       },
     ],
@@ -81,9 +69,6 @@ const PostSchema = new Schema(
         },
         rating: {
           type: Number,
-        },
-        time: {
-          type: String,
         },
       },
     ],
