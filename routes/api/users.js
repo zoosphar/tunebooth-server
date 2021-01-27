@@ -82,6 +82,7 @@ router.post("/googleAuth", (req, res) => {
                 { expiresIn: "14d" },
                 (err, token) => {
                   res.json({
+                    id: user.id,
                     status: "g_login success",
                     token: "Bearer " + token,
                   });
@@ -175,6 +176,7 @@ router.post("/fbAuth", (req, res) => {
                 { expiresIn: "14d" },
                 (err, token) => {
                   res.json({
+                    id: user.id,
                     status: "fb_login success",
                     token: "Bearer " + token,
                   });
@@ -232,6 +234,7 @@ router.post("/phoneAuthLogin", (req, res) => {
                 { expiresIn: "14d" },
                 (err, token) => {
                   res.json({
+                    id: user.id,
                     status: "p_login success",
                     token: "Bearer " + token,
                   });
@@ -321,5 +324,12 @@ router.get(
     });
   }
 );
+
+// // @route   GET api/users/current
+// // @desc    Return current user
+// // @access  Private
+// router.get("/refreshToken", passport.authenticate("jwt", {session: false}), (req, res) => {
+
+// })
 
 module.exports = router;

@@ -15,11 +15,17 @@ const postValidations = require("../../validation/postValidations.js");
 
 const Post = require("../../models/PostModel");
 const Profile = require("../../models/ProfileModel");
+const Notif = require("../../models/NotifModel");
+const User = require("../../models/UserModel");
 const { ObjectID, ObjectId } = require("mongodb");
 
+// aws.config.accessKeyId = "AKIAQ2FVT7SODEKROIE3";
+// aws.config.secretAccessKey = "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";
+// aws.config.region = "ap-south-1";
+
 aws.config.update({
-  accessKeyId: "AKIAIJZCL3LS4KX2XEQA",
-  secretAccessKey: "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",
+  accessKeyId: "AKIAQ2FVT7SODEKROIE3",
+  secretAccessKey: "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",
   region: "ap-south-1",
 });
 
@@ -50,7 +56,7 @@ router.post(
     });
     upload.single("file")(req, res, (err) => {
       if (err) {
-        return res.status(400).json({ message: "Video Upload Failed", err });
+        return res.status(400).json({ msg: "VFailure", err });
       } else {
         const { errors, isValid } = postValidations.postValidation(req.body);
         if (!isValid) {
@@ -83,7 +89,7 @@ router.post(
           )}/Thumbnails/videoFile_${currentTimeStamp}_${req.file.originalname
           .split(" ")
           .join("_")
-          .replace(".mp4", "")}.0000000.jpg`;
+          .replace(".mp4", "")}.0000001.jpg`;
         if (req.body.mediaType) postFields.mediaType = req.body.mediaType;
         if (req.body.category) postFields.category = req.body.category;
         if (req.body.postType) postFields.postType = req.body.postType;
@@ -98,7 +104,7 @@ router.post(
         const newPost = new Post(postFields);
         newPost.save().then((post) => {
           return res.status(200).json({
-            message: "post created",
+            msg: "post ok",
             post,
           });
         });
@@ -132,7 +138,7 @@ router.post(
     });
     upload.single("file")(req, res, (err) => {
       if (err) {
-        return res.status(400).json({ message: "Audio Upload Failed", err });
+        return res.status(400).json({ msg: "AFailure", err });
       } else {
         const { errors, isValid } = postValidations.postValidation(req.body);
         if (!isValid) {
@@ -165,7 +171,7 @@ router.post(
         const newPost = new Post(postFields);
         newPost.save().then((post) => {
           return res.status(200).json({
-            message: "post created",
+            msg: "post ok",
             post,
           });
         });
@@ -195,7 +201,7 @@ router.post(
     // Compressing images to 30% of their actual size
     uploadLocal.single("file")(req, res, (err) => {
       if (err) {
-        return res.json({ message: `upload error` });
+        return res.json({ msg: `error` });
       } else {
         // actual flow of route, before that parsing of mulitpart/form-data is done
         const currentTimeStamp = Date.now().toString();
@@ -230,9 +236,8 @@ router.post(
 
           s3.upload(paramsS3, async (err, data) => {
             if (err) {
-              return res
-                .status(400)
-                .json({ message: "Image Upload Failed", err });
+              console.log("error in uploading post: ", err);
+              return res.status(400).json({ msg: "IFailure", err });
             }
             if (data) {
               await unlinkAsync(file[0].destinationPath);
@@ -264,13 +269,65 @@ router.post(
                 postFields.pollOptions = req.body.pollOptions.split(",");
               }
 
-              const newPost = new Post(postFields);
-              newPost.save().then((post) => {
-                return res.status(200).json({
-                  message: "post created",
-                  post,
+              Post.findOne({ user: ObjectId(req.user.id) }, { createdAt: 1 })
+                .sort({ _id: -1 })
+                .limit(1)
+                .then((result) => {
+                  const newPost = new Post(postFields);
+                  newPost.save().then((post) => {
+                    // if (result !== null) {
+                    //   let date1 = new Date(result.createdAt).getTime();
+                    //   let date2 = new Date().getTime();
+                    //   let dayDiff = Math.floor(
+                    //     (date2 - date1) / (1000 * 3600 * 24)
+                    //   );
+                    //   if (dayDiff >= 7) {
+                    //     // posting after a week
+                    //     Profile.aggregate([
+                    //       { user: ObjectId(req.user.id) },
+                    //       {
+                    //         $lookup: {
+                    //           from: "users",
+                    //           localField: "user",
+                    //           foreignField: "_id",
+                    //           as: "username",
+                    //         },
+                    //       },
+                    //       {
+                    //         $unwind: "$username",
+                    //       },
+                    //       {
+                    //         $project: {
+                    //           tuneUps: 1,
+                    //           "username.username": 1,
+                    //           _id: 0,
+                    //         },
+                    //       },
+                    //     ]).then((result1) => {
+                    //       let UserIdArr = result1.tuneUps;
+                    //       let bulkNotif = [];
+                    //       if (UserIdArr.length !== 0) {
+                    //         UserIdArr.forEach((item) => {
+                    //           let notifData = {};
+                    //           notifData.user = item;
+                    //           notifData.type = "PBC";
+                    //           notifData.postId = ObjectId(post._id);
+                    //           notifData.byUsername = result1.username.username;
+                    //           bulkNotif.push(notifData);
+                    //         });
+                    //         console.log("Notif data: ", bulkNotif);
+                    //         Notif.insertMany(bulkNotif);
+                    //       }
+                    //     });
+                    //   }
+                    // } else {
+                    // }
+                    return res.status(200).json({
+                      msg: "post ok",
+                      post,
+                    });
+                  });
                 });
-              });
             }
           });
         });
@@ -313,7 +370,7 @@ router.post(
     const newPost = new Post(postFields);
     newPost.save().then((post) => {
       return res.status(200).json({
-        message: "post created",
+        msg: "post ok",
         post,
       });
     });
@@ -335,7 +392,7 @@ router.put(
   }
 );
 
-// @route   POST api/posts/image
+// @route   POST api/posts/getPosts
 // @desc    get posts route
 // @access  Private
 router.post(
@@ -347,15 +404,14 @@ router.post(
       return res.status(400).json(errors);
     }
     let postList = {};
+    Post.createIndexes([{ "rating.userID": 1 }, { "polling.userID": 1 }]);
     if (req.body.filterTune === "your_tunes") {
       let tuneUps = await Profile.find(
         { _id: req.user.id },
         { tuneUps: 1, _id: 0 }
       );
       tuneUps = tuneUps[0].tuneUps;
-      console.log("tuneUps are: ", tuneUps);
       if (req.body.startingId) {
-        Post.createIndexes([{ "rating.userID": 1 }, { "polling.userID": 1 }]);
         postList = Post.find({
           $and: [
             { _id: { $in: tuneUps } },
@@ -377,13 +433,11 @@ router.post(
       );
       interests = interests[0].interests;
       if (req.body.startingId) {
+        console.log(req.body);
         postList = await Post.aggregate([
           {
             $match: {
-              $and: [
-                { category: { $in: interests } },
-                { _id: { $gt: ObjectId(req.body.startingId) } },
-              ],
+              _id: { $lt: ObjectId(req.body.startingId) },
             },
           },
           {
@@ -419,6 +473,12 @@ router.post(
                   },
                 },
               },
+              totalRatings: {
+                $size: "$rating",
+              },
+              totalPollings: {
+                $size: "$polling",
+              },
             },
           },
           {
@@ -440,13 +500,18 @@ router.post(
               "username.updatedAt": 0,
             },
           },
-        ]).limit(Number(req.body.fetchLimitCount));
+        ])
+          .sort({ _id: -1 })
+          .limit(Number(req.body.fetchLimitCount));
       } else {
         postList = await Post.aggregate([
           {
-            $match: {
-              category: { $in: interests },
+            $sort: {
+              _id: -1,
             },
+          },
+          {
+            $match: {},
           },
           {
             $lookup: {
@@ -512,8 +577,96 @@ router.post(
         ]).limit(Number(req.body.fetchLimitCount));
       }
     }
-    console.log("post fetched are: ", postList);
+    console.log(postList);
     return res.status(200).json(postList);
+  }
+);
+
+// @route   POST api/posts/getPost
+// @desc    get single post route
+// @access  Private
+router.post(
+  "/getSinglePost",
+  passport.authenticate("jwt", { session: false }),
+  async (req, res) => {
+    if (
+      req.body.postId.trim() === "" ||
+      req.body.postId === null ||
+      req.body.postId === undefined
+    ) {
+      console.log("bad request");
+      return res.status(401).json({ msg: "Id required" });
+    }
+    const post = await Post.aggregate([
+      {
+        $match: {
+          _id: { $eq: ObjectId(req.body.postId) },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "username",
+        },
+      },
+      {
+        $unwind: "$username",
+      },
+      {
+        $addFields: {
+          ratingData: {
+            $filter: {
+              input: "$rating",
+              as: "raters",
+              cond: {
+                $and: [{ $eq: ["$$raters.userID", ObjectId(req.user.id)] }],
+              },
+            },
+          },
+          pollingData: {
+            $filter: {
+              input: "$polling",
+              as: "pollers",
+              cond: {
+                $and: [{ $eq: ["$$pollers.userID", ObjectId(req.user.id)] }],
+              },
+            },
+          },
+          totalRatings: {
+            $size: "$rating",
+          },
+          totalPollings: {
+            $size: "$polling",
+          },
+        },
+      },
+      {
+        $project: {
+          __v: 0,
+          rating: 0,
+          polling: 0,
+          "username.__v": 0,
+          "username._id": 0,
+          "username.phone": 0,
+          "username.email": 0,
+          "username.password": 0,
+          "username.isPremiumUser": 0,
+          "username.type": 0,
+          "username.g_id": 0,
+          "username.fb_id": 0,
+          "username.p_id": 0,
+          "username.createdAt": 0,
+          "username.updatedAt": 0,
+        },
+      },
+    ]);
+    if (post === null) {
+      return res.status(404).json({ msg: "Not Found" });
+    }
+    console.log("fetched single post: ", post);
+    return res.status(200).json(post);
   }
 );
 
@@ -530,6 +683,22 @@ router.post(
     if (!isValid) {
       return res.status(400).json(errors);
     }
+    let notifData = {};
+    Post.findOne(
+      {
+        _id: ObjectId(req.body.postId),
+      },
+      { user: 1, _id: 0 }
+    ).then((res) => {
+      User.findOne({ _id: req.user.id }, { username: 1, _id: 0 }).then(
+        (res1) => {
+          notifData.user = ObjectId(res.user);
+          notifData.byUsername = res1.username;
+          notifData.postId = ObjectId(req.body.postId);
+        }
+      );
+    });
+
     if (req.body.feedbackType === "R") {
       let rating = parseInt(req.body.rating);
       let ratingData = {
@@ -549,7 +718,7 @@ router.post(
             { $set: { "rating.$.rating": rating } }
           )
             .then((result) => {
-              return res.status(200).json({ message: "rating updated" });
+              return res.status(200).json({ msg: "rating ok" });
             })
             .catch((err) => {
               return res.status(500).json(err);
@@ -559,7 +728,16 @@ router.post(
             { _id: ObjectId(req.body.postId) },
             { $push: { rating: ratingData } }
           ).then((result) => {
-            return res.status(200).json({ message: "rating added" });
+            // if()
+            // Save notification of new rating added
+            notifData.type = "PR";
+            const notif = new Notif(notifData);
+            notif.save().then((result) => {
+              return res.status(200).json({
+                msg: "ok",
+              });
+            });
+            return res.status(200).json({ msg: "rating ok" });
           });
         }
       });
@@ -573,14 +751,11 @@ router.post(
         userID: ObjectId(req.user.id),
         choosedOpts,
       };
-      console.log("updating polling feedback...");
       Post.findOne(
         { _id: ObjectId(req.body.postId) },
         { "polling.userID": ObjectId(req.user.id) }
       ).then((result) => {
-        console.log(result);
         if (result.polling.length !== 0) {
-          console.log("in update poll");
           Post.updateOne(
             {
               _id: ObjectId(req.body.postId),
@@ -589,18 +764,25 @@ router.post(
             { $set: { "polling.$.choosedOpts": choosedOpts } }
           )
             .then((result) => {
-              return res.status(200).json({ message: "poll updated" });
+              return res.status(200).json({ msg: "poll ok" });
             })
             .catch((err) => {
               return res.status(500).json(err);
             });
         } else {
-          console.log("in new poll");
           Post.updateOne(
             { _id: ObjectId(req.body.postId) },
             { $push: { polling: pollingData } }
           ).then((result) => {
-            return res.status(200).json({ message: "poll added" });
+            // save notification of new polling added
+            notifData.type = "PP";
+            const notif = new Notif(notifData);
+            notif.save().then((result) => {
+              return res.status(200).json({
+                msg: "ok",
+              });
+            });
+            return res.status(200).json({ msg: "poll ok" });
           });
         }
       });

@@ -99,4 +99,13 @@ router.post(
   }
 );
 
+// @route   POST api/profiles/getProfile
+// @desc    get the profile of a user
+// @access  Private
+router.post('/getProfile',passport.authenticate("jwt", {session: false}), (req, res) => {
+  if(req.body.getType === 'currentUser'){
+    Profile
+  }
+})
+
 module.exports = router;
